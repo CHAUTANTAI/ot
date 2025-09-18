@@ -1,103 +1,163 @@
-import Image from "next/image";
+'use client';
+
+import React, { useState } from 'react';
+import { Button, List, Modal, Form, Input, Card, Space, message, App } from 'antd';
+import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { useGetDecksQuery, useCreateDeckMutation, useUpdateDeckMutation, useDeleteDeckMutation } from '@/store/api';
+import { useRouter } from 'next/navigation';
+
+interface Deck {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+interface DeckFormProps {
+  open: boolean;
+  onCancel: () => void;
+  onFinish: (values: { name: string; description?: string }) => void;
+  initialValues?: Deck;
+}
+
+const DeckForm: React.FC<DeckFormProps> = ({ open, onCancel, onFinish, initialValues }) => {
+  const [form] = Form.useForm();
+
+  React.useEffect(() => {
+    form.setFieldsValue(initialValues);
+  }, [initialValues, form]);
+
+  return (
+    <Modal
+      open={open}
+      title={initialValues ? 'Edit Deck' : 'Add New Deck'}
+      onCancel={onCancel}
+      onOk={() => {
+        form.validateFields()
+          .then(values => {
+            form.resetFields();
+            onFinish(values);
+          })
+          .catch(info => {
+            console.log('Validate Failed:', info);
+          });
+      }}
+    >
+      <Form
+        form={form}
+        layout="vertical"
+        name="deck_form"
+        initialValues={initialValues}
+      >
+        <Form.Item
+          name="name"
+          label="Deck Name"
+          rules={[{ required: true, message: 'Please input the name of the deck!' }]}
+        >
+          <Input />
+        </Form.Item>
+        <Form.Item
+          name="description"
+          label="Description"
+        >
+          <Input.TextArea />
+        </Form.Item>
+      </Form>
+    </Modal>
+  );
+};
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const router = useRouter();
+  const { message, modal } = App.useApp();
+  console.log('Ant Design Modal object:', modal);
+  const { data: decks, error, isLoading } = useGetDecksQuery();
+  const [createDeck] = useCreateDeckMutation();
+  const [updateDeck] = useUpdateDeckMutation();
+  const [deleteDeck] = useDeleteDeckMutation();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingDeck, setEditingDeck] = useState<Deck | undefined>(undefined);
+
+  const handleAddDeck = () => {
+    setEditingDeck(undefined);
+    setIsModalOpen(true);
+  };
+
+  const handleEditDeck = (deck: Deck) => {
+    setEditingDeck(deck);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteDeck = async (id: string) => {
+    modal.confirm({
+      title: 'Are you sure you want to delete this deck?',
+      content: 'This action cannot be undone.',
+      onOk: async () => {
+        try {
+          await deleteDeck(id).unwrap();
+          message.success('Deck deleted successfully');
+        } catch (err) {
+          message.error('Failed to delete deck');
+          console.error('Failed to delete deck:', err);
+        }
+      },
+    });
+  };
+
+  const handleFormFinish = async (values: { name: string; description?: string }) => {
+    try {
+      if (editingDeck) {
+        await updateDeck({ id: editingDeck.id, ...values }).unwrap();
+        message.success('Deck updated successfully');
+      } else {
+        await createDeck(values).unwrap();
+        message.success('Deck created successfully');
+      }
+      setIsModalOpen(false);
+    } catch (err) {
+      message.error(`Failed to ${editingDeck ? 'update' : 'create'} deck`);
+      console.error(`Failed to ${editingDeck ? 'update' : 'create'} deck:`, err);
+    }
+  };
+
+  if (isLoading) return <div>Loading decks...</div>;
+  if (error) return <div>Error loading decks: {JSON.stringify(error)}</div>;
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">My Decks</h1>
+        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddDeck}>
+          Add New Deck
+        </Button>
+      </div>
+
+      <List
+        grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 4, xl: 5, xxl: 6 }}
+        dataSource={decks}
+        renderItem={(deck) => (
+          <List.Item>
+            <Card
+              title={deck.name}
+              actions={[
+                <EditOutlined key="edit" onClick={() => handleEditDeck(deck)} />,
+                <DeleteOutlined key="delete" onClick={() => handleDeleteDeck(deck.id)} />,
+              ]}
+              onClick={() => router.push(`/flashcards/${deck.id}`)}
+              className="cursor-pointer hover:shadow-lg transition-shadow duration-200"
+            >
+              <p>{deck.description || 'No description'}</p>
+            </Card>
+          </List.Item>
+        )}
+      />
+
+      <DeckForm
+        open={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        onFinish={handleFormFinish}
+        initialValues={editingDeck}
+      />
     </div>
   );
 }
